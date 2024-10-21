@@ -17,7 +17,12 @@ class YTDLPMusicDownloader(MusicDownloadInterface):
 		url: str = input("Enter the music URL: ")
 
 		ydl_opts = {
-			'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best',
+			'format': 'bestaudio/best',  # Download the best available audio
+			'postprocessors': [{
+				'key': 'FFmpegExtractAudio',
+				'preferredcodec': 'flac',
+				'preferredquality': '192',
+			}],
 			'outtmpl': os.path.join(DOWNLOAD_PATH, '%(title)s.%(ext)s'),
 			'noplaylist': True
 		}
