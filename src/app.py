@@ -4,6 +4,10 @@ from typing import List
 from py_common.cli_framework import CommandLineInterface
 from py_common.logging import HoornLogger, HoornLogOutputInterface, DefaultHoornLogOutput, FileHoornLogOutput
 
+from src.music_download_interface import MusicDownloadInterface
+from src.yt_dlp_music_downloader import YTDLPMusicDownloader
+
+
 def get_user_local_app_data_dir() -> Path:
 	return Path.home() / "AppData" / "Local"
 
@@ -26,7 +30,10 @@ if __name__ == "__main__":
 		outputs
 	)
 
+	downloader: MusicDownloadInterface = YTDLPMusicDownloader(logger)
+
 	cli: CommandLineInterface = CommandLineInterface(logger)
-	cli.add_command(["exit", "quit"], "Exit the program.", clean_exit)
+	cli.add_command(["exit", "quit"], "Exit the program.", clean_exit, arguments=[logger])
+	cli.add_command(["download"], "Download music files.", downloader.download_track)
 
 	cli.start_listen_loop()
