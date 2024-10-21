@@ -1,1 +1,1 @@
-./local_wheels/md_py_common-0.0.7-py3-none-any.whl
+./local_wheels/md_py_common-0.0.8-py3-none-any.whl
