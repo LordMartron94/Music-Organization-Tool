@@ -122,3 +122,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Personal
+.vale.ini
+.vale-styles
+
+# IDEA
+/.idea
+
+install_requirements.ps1
