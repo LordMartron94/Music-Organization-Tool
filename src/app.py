@@ -47,6 +47,12 @@ def print_metadata_keys(metadata_api: MetadataAPI):
 def populate_metadata_from_musicbrainz(metadata_api: MetadataAPI):
 	metadata_api.populate_metadata_from_musicbrainz(Path(input("Enter the directory path to populate metadata: ")))
 
+def organize_music_files(metadata_api: MetadataAPI):
+	directory_path = Path(input("Enter the directory path to organize music: "))
+	organized_path = Path(input("Enter the directory path to save organized music: "))
+
+	metadata_api.organize_music_files(directory_path, organized_path)
+
 if __name__ == "__main__":
 	log_dir = get_user_log_directory()
 
@@ -68,5 +74,6 @@ if __name__ == "__main__":
 	cli.add_command(["metadata", "md"], "Find metadata for a given song.", populate_metadata_from_musicbrainz, arguments=[metadata_api])
 	cli.add_command(["clear"], "Clear metadata files.", clear_metadata_files, arguments=[metadata_api])
 	cli.add_command(["db_keys"], "Print available metadata keys.", print_metadata_keys, arguments=[metadata_api])
+	cli.add_command(["organize"], "Organize music files.", organize_music_files, arguments=[metadata_api])
 
 	cli.start_listen_loop()

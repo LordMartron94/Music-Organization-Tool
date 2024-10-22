@@ -84,7 +84,7 @@ class MetadataManipulator:
 		metadata_dict: Dict[MetadataKey, str] = {}
 		for key in MetadataKey:
 			if key.value in file.keys():
-				metadata_dict[key] = file[key.value]
+				metadata_dict[key] = str(file[key.value][0])
 
 		return metadata_dict
 

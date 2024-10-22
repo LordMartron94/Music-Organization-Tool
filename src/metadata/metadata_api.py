@@ -3,6 +3,7 @@ from typing import Dict, List
 
 from py_common.logging import HoornLogger
 
+from src.handlers.library_file_handler import LibraryFileHandler
 from src.metadata.clear_metadata import ClearMetadata
 from src.metadata.metadata_populater import MetadataPopulater
 from src.metadata.metadata_manipulator import MetadataManipulator, MetadataKey
@@ -16,6 +17,7 @@ class MetadataAPI:
 		self._metadata_clear_tool: ClearMetadata = ClearMetadata(logger)
 		self._metadata_manipulator: MetadataManipulator = MetadataManipulator(logger)
 		self._musicbrainz_metadata_populater: MetadataPopulater = MetadataPopulater(logger)
+		self._library_file_handler: LibraryFileHandler = LibraryFileHandler(logger)
 
 	def clear_genres(self, music_directory: Path) -> None:
 		self._metadata_clear_tool.clear_genres(music_directory)
@@ -43,3 +45,6 @@ class MetadataAPI:
 
 	def populate_metadata_from_musicbrainz(self, directory_path: Path) -> None:
 		self._musicbrainz_metadata_populater.find_and_embed_metadata(directory_path)
+
+	def organize_music_files(self, directory_path: Path, organized_path: Path) -> None:
+		self._library_file_handler.organize_music_files(directory_path, organized_path)

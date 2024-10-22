@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 import pydantic
 
@@ -6,5 +6,5 @@ from src.metadata.metadata_manipulator import MetadataKey
 
 
 class RecordingModel(pydantic.BaseModel):
-	mbid: str
+	mbid: Optional[str] = None
 	metadata: Dict[MetadataKey, str]

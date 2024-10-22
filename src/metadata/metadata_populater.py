@@ -6,7 +6,6 @@ from py_common.logging import HoornLogger
 import musicbrainzngs
 import re
 
-from src.constants import ORGANIZED_PATH
 from src.handlers.library_file_handler import LibraryFileHandler
 from src.metadata.helpers.musicbrainz_api_helper import MusicBrainzAPIHelper
 from src.metadata.helpers.musicbrainz_result_interpreter import MusicBrainzResultInterpreter
@@ -112,9 +111,6 @@ class MetadataPopulater:
 		"""
 		try:
 			self._metadata_manipulator.update_metadata_from_dict(file, recording_model.metadata)
-			metadata = recording_model.metadata
-
-			self._place_file_correctly(file, metadata[MetadataKey.Genre].split(';')[0], metadata[MetadataKey.Title], metadata[MetadataKey.Album], metadata[MetadataKey.Artist], int(metadata[MetadataKey.TrackNumber]))
 			self._logger.info(f"Embedded metadata into {file.name}")
 		except musicbrainzngs.MusicBrainzError as e:
 			self._logger.error(f"MusicBrainzError: {e}")
@@ -123,13 +119,3 @@ class MetadataPopulater:
 
 	def _get_files(self, directory_path: Path) -> List[Path]:
 		return self._music_library_handler.get_music_files(directory_path)
-
-	def _place_file_correctly(self, file: Path, genre: str, track_title: str, track_album: str, track_artist: str, track_number: int) -> None:
-		new_name: str = f"{track_number:02d} - {track_artist} - {track_title}.flac"
-		new_path: Path = ORGANIZED_PATH.joinpath(genre).joinpath(track_album.replace("/", "-").replace(":", "_")).joinpath(new_name)
-
-		# Make directories if necessary
-		new_path.parent.mkdir(parents=True, exist_ok=True)
-
-		file.rename(new_path)
-		self._logger.info(f"Moved {file.name} to {new_path.parent.name}/{new_path.name}")
