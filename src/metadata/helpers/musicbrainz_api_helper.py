@@ -53,8 +53,8 @@ class MusicBrainzAPIHelper:
 
 		metadata[MetadataKey.Album] = album
 		metadata[MetadataKey.AlbumArtist] = album_artist
-		metadata[MetadataKey.TrackNumber] = str(track_number if track_number else 1)
-		metadata[MetadataKey.DiscNumber] = str(disc_number if disc_number else 1)
+		metadata[MetadataKey.TrackNumber] = str(track_number if track_number else 0)
+		metadata[MetadataKey.DiscNumber] = str(disc_number if disc_number else 0)
 		metadata[MetadataKey.Date] = release_date
 		metadata[MetadataKey.Genre] = self._convert_genres_to_string(self._filter_genres(genres))
 
@@ -72,6 +72,9 @@ class MusicBrainzAPIHelper:
 		return edited_genres
 
 	def _convert_genres_to_string(self, genres: List[str]) -> str:
+		if genres is None or genres == []:
+			return "No Genre"
+
 		return "; ".join(genres)
 
 	def _get_track_and_disc_number(self, release: dict, recording_id: str) -> Tuple[int, int]:
@@ -89,7 +92,7 @@ class MusicBrainzAPIHelper:
 		return track_number, disc_number
 
 	def _get_release_date(self, release: dict) -> str or None:
-		return release.get('date', None)
+		return release.get('date', "0000-00-00")
 
 	def _get_genres(self, release: dict) -> List[str]:
 		return [tag['name'] for tag in release.get('tag-list', [])]

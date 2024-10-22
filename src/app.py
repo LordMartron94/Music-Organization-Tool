@@ -5,6 +5,7 @@ from typing import List
 from py_common.cli_framework import CommandLineInterface
 from py_common.logging import HoornLogger, HoornLogOutputInterface, DefaultHoornLogOutput, FileHoornLogOutput
 
+from src.constants import DOWNLOAD_PATH, ORGANIZED_PATH
 from src.metadata.clear_metadata import ClearMetadata
 from src.metadata.metadata_api import MetadataAPI
 from src.metadata.metadata_populater import MetadataPopulater
@@ -48,8 +49,15 @@ def populate_metadata_from_musicbrainz(metadata_api: MetadataAPI):
 	metadata_api.populate_metadata_from_musicbrainz(Path(input("Enter the directory path to populate metadata: ")))
 
 def organize_music_files(metadata_api: MetadataAPI):
-	directory_path = Path(input("Enter the directory path to organize music: "))
-	organized_path = Path(input("Enter the directory path to save organized music: "))
+	directory_path = input("Enter the directory path to organize music (leave empty for default): ")
+	organized_path = input("Enter the directory path to save organized music (leave empty for default): ")
+
+	if directory_path == "":
+		directory_path = DOWNLOAD_PATH
+	else: directory_path = Path(directory_path)
+	if organized_path == "":
+		organized_path = ORGANIZED_PATH
+	else: organized_path = Path(organized_path)
 
 	metadata_api.organize_music_files(directory_path, organized_path)
 
