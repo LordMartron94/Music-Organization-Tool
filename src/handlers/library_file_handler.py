@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import List
 
@@ -44,6 +45,9 @@ class LibraryFileHandler:
 		for file in missing_metadata_files:
 			self._place_inaccurate_file(file.path, organized_path)
 
+		self._remove_empty_directories(directory_path)
+		self._remove_empty_directories(organized_path)
+
 	def _place_accurate_file(self, file: Path, recording_model: RecordingModel, organized_path: Path) -> None:
 		"""
 		Places a music file into an organized directory structure based on its metadata.
@@ -67,20 +71,26 @@ class LibraryFileHandler:
 		album = metadata[MetadataKey.Album].replace("/", "-").replace(":", "_")
 		new_path = organized_path / "SORTED" / genre / album / new_name
 
+		if file == new_path:
+			return  # File already exists at the correct location
+
 		# Create the directory structure if it doesn't exist
 		new_path.parent.mkdir(parents=True, exist_ok=True)
 
 		# Move and rename the file
-		file.rename(new_path)
+		shutil.move(file, new_path)
 		self._logger.info(f"Moved '{file.name}' to '{new_path.parent.name}/{new_path.name}'")
 
 	def _place_inaccurate_file(self, file: Path, organized_path: Path) -> None:
 		new_path: Path = organized_path.joinpath("_MISSING METADATA").joinpath(file.name)
 
+		if file == new_path:
+			return  # File already exists at the incorrect location
+
 		# Make directories if necessary
 		new_path.parent.mkdir(parents=True, exist_ok=True)
 
-		file.rename(new_path)
+		shutil.move(file, new_path)
 		self._logger.info(f"Moved {file.name} to {new_path.parent.name}/{new_path.name}")
 
 	def recheck_missing_metadata(self, organized_path: Path):
@@ -88,3 +98,12 @@ class LibraryFileHandler:
 
 	def rescan_entire_library(self, organized_path):
 		self.organize_music_files(organized_path, organized_path)
+
+	def _remove_empty_directories(self, directory: Path) -> None:
+		"""
+        Removes empty directories from the given directory and its subdirectories.
+        """
+		for child in directory.iterdir():
+			if child.is_dir() and not child.iterdir():
+				self._logger.debug(f"Removing empty directory: {child.name}")
+				child.rmdir()
