@@ -2,7 +2,9 @@ from typing import Dict, Tuple, List
 
 import musicbrainzngs
 from py_common.logging import HoornLogger
+from yt_dlp.aes import sub_bytes
 
+from src.constants import GENRE_MAPPINGS
 from src.metadata.helpers.recording_model import RecordingModel
 from src.metadata.helpers.release_model import ReleaseModel
 from src.metadata.metadata_manipulator import MetadataKey
@@ -35,8 +37,10 @@ class MusicBrainzAPIHelper:
 		metadata[MetadataKey.TrackNumber] = release.metadata[MetadataKey.TrackNumber]
 		metadata[MetadataKey.DiscNumber] = release.metadata[MetadataKey.DiscNumber]
 		metadata[MetadataKey.Date] = release.metadata[MetadataKey.Date]
+		metadata[MetadataKey.Year] = release.metadata[MetadataKey.Year]
 		metadata[MetadataKey.Length] = str(recording_length / 1000)  # Convert milliseconds to seconds
 		metadata[MetadataKey.Genre] = release.metadata[MetadataKey.Genre]
+		metadata[MetadataKey.SubGenre] = release.metadata[MetadataKey.SubGenre]
 
 		return RecordingModel(mbid=recording_id, metadata=metadata)
 
@@ -56,26 +60,47 @@ class MusicBrainzAPIHelper:
 		metadata[MetadataKey.TrackNumber] = str(track_number if track_number else 0)
 		metadata[MetadataKey.DiscNumber] = str(disc_number if disc_number else 0)
 		metadata[MetadataKey.Date] = release_date
-		metadata[MetadataKey.Genre] = self._convert_genres_to_string(self._filter_genres(genres))
+		metadata[MetadataKey.Year] = release_date[:4]
+
+		filtered_genres: Tuple[str, List[str]] = self._filter_genres(genres)
+		metadata[MetadataKey.Genre] = filtered_genres[0]
+		metadata[MetadataKey.SubGenre] = "Subgenres: " + self._convert_sub_genres_to_string(filtered_genres[1])
 
 		release_model = ReleaseModel(mbid=release_id, metadata=metadata)
 		return release_model
 
-	def _filter_genres(self, genres: List[str]) -> List[str]:
-		edited_genres = []
+	def _filter_genres(self, genres: List[str]) -> Tuple[str, List[str]]:
+		sub_genres = []
+
+		main_genre = "Other Genre"
 
 		for genre in genres:
 			if genre == "Specify the genre of music":
 				continue
-			edited_genres.append(genre)
 
-		return edited_genres
+			genre_info = self._get_genre_info(genre)
 
-	def _convert_genres_to_string(self, genres: List[str]) -> str:
+			if genre_info is None:
+				continue
+
+			if not genre_info["main"]:
+				sub_genres.append(genre)
+			else: main_genre = genre_info["label"]
+
+		return main_genre, sub_genres
+
+	def _convert_sub_genres_to_string(self, genres: List[str]) -> str:
 		if genres is None or genres == []:
-			return "No Genre"
+			return "N/A"
 
-		return "; ".join(genres)
+		normalized_genres = [self._normalize_genre(genre) for genre in genres]
+		duplicate_removed_genres = []
+
+		for genre in normalized_genres:
+			if genre not in duplicate_removed_genres:
+				duplicate_removed_genres.append(genre)
+
+		return "; ".join(duplicate_removed_genres)
 
 	def _get_track_and_disc_number(self, release: dict, recording_id: str) -> Tuple[int, int]:
 		track_number = None
@@ -96,3 +121,24 @@ class MusicBrainzAPIHelper:
 
 	def _get_genres(self, release: dict) -> List[str]:
 		return [tag['name'] for tag in release.get('tag-list', [])]
+
+	def _get_genre_info(self, genre: str) -> dict or None:
+		for genre_key, info in GENRE_MAPPINGS.items():
+			if genre_key.lower() == genre.lower():
+				return info
+
+		self._logger.warning(f"No genre mapping found for '{genre}'.")
+		return None
+
+	def _normalize_genre(self, genre: str) -> str:
+		"""
+		Maps a MusicBrainz genre to a standardized top-level genre.
+
+		Args:
+		  genre: The genre string from MusicBrainz.
+
+		Returns:
+		  The standardized genre string, or 'Other' if no mapping is found.
+		"""
+
+		return self._get_genre_info(genre)["label"]

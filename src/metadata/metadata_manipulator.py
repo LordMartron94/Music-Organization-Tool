@@ -1,5 +1,6 @@
 from enum import Enum
 from pathlib import Path
+from pprint import pprint
 from typing import Dict, List
 
 import mutagen
@@ -14,11 +15,13 @@ class MetadataKey(Enum):
 	AlbumArtist = "albumartist"
 
 	Genre = "genre"
+	SubGenre = "description"
 
 	TrackNumber = "tracknumber"
 	DiscNumber = "discnumber"
 
 	Date = "date"
+	Year = "year"
 
 	Encoder = "encoder"
 	Length = "length"
@@ -48,8 +51,7 @@ class MetadataManipulator:
 
 		for key, value in metadata_dict.items():
 			if key.value not in file.keys():
-				self._logger.warning(f"Metadata key {key.value} not found in file {file_path}")
-				continue
+				self._logger.warning(f"Metadata key {key.value} not found in file {file_path} - Trying to Add it.")
 
 			file[key.value] = value
 
@@ -60,7 +62,6 @@ class MetadataManipulator:
 
 		if metadata_key.value not in file.keys():
 			self._logger.warning(f"Metadata key {metadata_key.value} not found in file {file_path}")
-			return
 
 		file[metadata_key.value] = new_value
 		file.save()

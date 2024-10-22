@@ -44,7 +44,13 @@ def print_metadata_keys(metadata_api: MetadataAPI):
 		pprint(f"- {key}")
 
 def populate_metadata_from_musicbrainz(metadata_api: MetadataAPI):
-	metadata_api.populate_metadata_from_musicbrainz(Path(input("Enter the directory path to populate metadata: ")))
+	directory_path = input("Enter the directory path to populate metadata (leave empty for default): ")
+
+	if directory_path == "":
+		directory_path = DOWNLOAD_PATH
+	else: directory_path = Path(directory_path)
+
+	metadata_api.populate_metadata_from_musicbrainz(directory_path)
 
 def organize_music_files(metadata_api: MetadataAPI):
 	directory_path = input("Enter the directory path to organize music (leave empty for default): ")
