@@ -34,9 +34,6 @@ class LibraryFileHandler:
 		"""
         Organizes the given music files into the specified organized_path.
         """
-		print(directory_path)
-		print(organized_path)
-
 		all_files = [RecordingModel(metadata=self._metadata_manipulator.get_all_metadata(file), path=file) for file in self.get_music_files(directory_path)]
 		missing_metadata_files = self._missing_metadata_finder.find_missing_metadata(all_files)
 		correct_metadata_files = [file for file in all_files if file not in missing_metadata_files]
