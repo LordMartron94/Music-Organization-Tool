@@ -1,12 +1,15 @@
 from pathlib import Path
+from pprint import pprint
 from typing import List
 
 from py_common.cli_framework import CommandLineInterface
 from py_common.logging import HoornLogger, HoornLogOutputInterface, DefaultHoornLogOutput, FileHoornLogOutput
 
-from src.metadata_finder import MetadataFinder
-from src.music_download_interface import MusicDownloadInterface
-from src.yt_dlp_music_downloader import YTDLPMusicDownloader
+from src.metadata.clear_metadata import ClearMetadata
+from src.metadata.metadata_api import MetadataAPI
+from src.metadata.metadata_populater import MetadataPopulater
+from src.downloading.music_download_interface import MusicDownloadInterface
+from src.downloading.yt_dlp_music_downloader import YTDLPMusicDownloader
 
 
 def get_user_local_app_data_dir() -> Path:
@@ -18,6 +21,31 @@ def get_user_log_directory() -> Path:
 def clean_exit(hlogger: HoornLogger):
 	hlogger.debug("Clean Exit...")
 	exit()
+
+def clear_metadata_files(metadata_api: MetadataAPI):
+	clear_options: List[str] = ["Genre", "Date"]
+	choice: str = input("Choose a metadata option to clear (Genre/Date): ")
+
+	if choice.lower() not in [option.lower() for option in clear_options]:
+		logger.error(f"Invalid option '{choice.lower()}'. Choose from: {', '.join(clear_options)}")
+		return clear_metadata_files(metadata_api)
+
+	directory = Path(input("Enter the directory path to clear metadata: "))
+
+	if choice.lower() == "genre":
+		metadata_api.clear_genres(directory)
+	elif choice.lower() == "date":
+		metadata_api.clear_dates(directory)
+
+def print_metadata_keys(metadata_api: MetadataAPI):
+	audio_file = Path(input("Enter the path to the audio file: "))
+	metadata_keys = metadata_api.get_metadata_keys(audio_file)
+	print("Available metadata keys:")
+	for key in metadata_keys:
+		pprint(f"- {key}")
+
+def populate_metadata_from_musicbrainz(metadata_api: MetadataAPI):
+	metadata_api.populate_metadata_from_musicbrainz(Path(input("Enter the directory path to populate metadata: ")))
 
 if __name__ == "__main__":
 	log_dir = get_user_log_directory()
@@ -32,11 +60,13 @@ if __name__ == "__main__":
 	)
 
 	downloader: MusicDownloadInterface = YTDLPMusicDownloader(logger)
-	metadata_helper: MetadataFinder = MetadataFinder(logger)
+	metadata_api: MetadataAPI = MetadataAPI(logger)
 
 	cli: CommandLineInterface = CommandLineInterface(logger)
 	cli.add_command(["exit", "quit"], "Exit the program.", clean_exit, arguments=[logger])
 	cli.add_command(["download"], "Download music files.", downloader.download_track)
-	cli.add_command(["metadata", "md"], "Find metadata for a given song.", metadata_helper.find_and_embed_metadata)
+	cli.add_command(["metadata", "md"], "Find metadata for a given song.", populate_metadata_from_musicbrainz, arguments=[metadata_api])
+	cli.add_command(["clear"], "Clear metadata files.", clear_metadata_files, arguments=[metadata_api])
+	cli.add_command(["db_keys"], "Print available metadata keys.", print_metadata_keys, arguments=[metadata_api])
 
 	cli.start_listen_loop()

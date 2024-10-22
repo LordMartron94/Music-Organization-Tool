@@ -4,7 +4,7 @@ import yt_dlp
 from py_common.logging import HoornLogger
 
 from src.constants import DOWNLOAD_PATH
-from src.music_download_interface import MusicDownloadInterface
+from src.downloading.music_download_interface import MusicDownloadInterface
 
 
 class YTDLPMusicDownloader(MusicDownloadInterface):
