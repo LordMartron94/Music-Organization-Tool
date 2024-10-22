@@ -26,7 +26,7 @@ class LibraryFileHandler:
 
 		for extension in SUPPORTED_MUSIC_EXTENSIONS:
 			self._logger.debug("Searching for files with extension '{}'.".format(extension))
-			files.extend(self._file_handler.get_children_paths(directory, extension))
+			files.extend(self._file_handler.get_children_paths(directory, extension, recursive=True))
 
 		return files
 
@@ -88,3 +88,6 @@ class LibraryFileHandler:
 
 	def recheck_missing_metadata(self, organized_path: Path):
 		self.organize_music_files(organized_path.joinpath("_MISSING METADATA"), organized_path)
+
+	def rescan_entire_library(self, organized_path):
+		self.organize_music_files(organized_path, organized_path)

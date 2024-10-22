@@ -49,5 +49,8 @@ class MetadataAPI:
 	def organize_music_files(self, directory_path: Path, organized_path: Path) -> None:
 		self._library_file_handler.organize_music_files(directory_path, organized_path)
 
-	def recheck_missing_metadata(self, organized_path):
+	def recheck_missing_metadata(self, organized_path: Path):
 		self._library_file_handler.recheck_missing_metadata(organized_path)
+
+	def rescan_entire_library(self, organized_path: Path):
+		self._library_file_handler.rescan_entire_library(organized_path)
