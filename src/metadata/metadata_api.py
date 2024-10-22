@@ -5,8 +5,8 @@ from py_common.logging import HoornLogger
 
 from src.handlers.library_file_handler import LibraryFileHandler
 from src.metadata.clear_metadata import ClearMetadata
-from src.metadata.metadata_populater import MetadataPopulater
 from src.metadata.metadata_manipulator import MetadataManipulator, MetadataKey
+from src.metadata.metadata_populater import MetadataPopulater
 
 
 class MetadataAPI:

@@ -6,11 +6,9 @@ from py_common.cli_framework import CommandLineInterface
 from py_common.logging import HoornLogger, HoornLogOutputInterface, DefaultHoornLogOutput, FileHoornLogOutput
 
 from src.constants import DOWNLOAD_PATH, ORGANIZED_PATH
-from src.metadata.clear_metadata import ClearMetadata
-from src.metadata.metadata_api import MetadataAPI
-from src.metadata.metadata_populater import MetadataPopulater
 from src.downloading.music_download_interface import MusicDownloadInterface
 from src.downloading.yt_dlp_music_downloader import YTDLPMusicDownloader
+from src.metadata.metadata_api import MetadataAPI
 
 
 def get_user_local_app_data_dir() -> Path:

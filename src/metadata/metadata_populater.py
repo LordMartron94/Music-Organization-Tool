@@ -1,10 +1,9 @@
+import re
 from pathlib import Path
 from typing import List, Dict
 
-from py_common.logging import HoornLogger
-
 import musicbrainzngs
-import re
+from py_common.logging import HoornLogger
 
 from src.handlers.library_file_handler import LibraryFileHandler
 from src.metadata.helpers.musicbrainz_api_helper import MusicBrainzAPIHelper

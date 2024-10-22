@@ -5,6 +5,7 @@ from typing import Dict, List
 import mutagen
 from py_common.logging import HoornLogger
 
+
 class MetadataKey(Enum):
 	Title = "title"
 
