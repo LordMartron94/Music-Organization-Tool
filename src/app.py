@@ -4,6 +4,7 @@ from typing import List
 from py_common.cli_framework import CommandLineInterface
 from py_common.logging import HoornLogger, HoornLogOutputInterface, DefaultHoornLogOutput, FileHoornLogOutput
 
+from src.metadata_finder import MetadataFinder
 from src.music_download_interface import MusicDownloadInterface
 from src.yt_dlp_music_downloader import YTDLPMusicDownloader
 
@@ -31,9 +32,11 @@ if __name__ == "__main__":
 	)
 
 	downloader: MusicDownloadInterface = YTDLPMusicDownloader(logger)
+	metadata_helper: MetadataFinder = MetadataFinder(logger)
 
 	cli: CommandLineInterface = CommandLineInterface(logger)
 	cli.add_command(["exit", "quit"], "Exit the program.", clean_exit, arguments=[logger])
 	cli.add_command(["download"], "Download music files.", downloader.download_track)
+	cli.add_command(["metadata", "md"], "Find metadata for a given song.", metadata_helper.find_and_embed_metadata)
 
 	cli.start_listen_loop()

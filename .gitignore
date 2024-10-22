@@ -126,6 +126,7 @@ dmypy.json
 # Personal
 .vale.ini
 .vale-styles
+/organized
 
 # IDEA
 /.idea
