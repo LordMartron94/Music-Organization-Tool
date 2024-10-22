@@ -65,6 +65,14 @@ def organize_music_files(metadata_api: MetadataAPI):
 
 	metadata_api.organize_music_files(directory_path, organized_path)
 
+def recheck_missing_metadata(metadata_api: MetadataAPI):
+	organized_path = input("Enter the directory path to save organized music (leave empty for default): ")
+
+	if organized_path == "":
+		organized_path = ORGANIZED_PATH
+
+	metadata_api.recheck_missing_metadata(organized_path)
+
 if __name__ == "__main__":
 	log_dir = get_user_log_directory()
 
@@ -87,5 +95,6 @@ if __name__ == "__main__":
 	cli.add_command(["clear"], "Clear metadata files.", clear_metadata_files, arguments=[metadata_api])
 	cli.add_command(["db_keys"], "Print available metadata keys.", print_metadata_keys, arguments=[metadata_api])
 	cli.add_command(["organize"], "Organize music files.", organize_music_files, arguments=[metadata_api])
+	cli.add_command(["recheck"], "Recheck missing metadata.", recheck_missing_metadata, arguments=[metadata_api])
 
 	cli.start_listen_loop()

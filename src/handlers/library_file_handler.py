@@ -85,3 +85,6 @@ class LibraryFileHandler:
 
 		file.rename(new_path)
 		self._logger.info(f"Moved {file.name} to {new_path.parent.name}/{new_path.name}")
+
+	def recheck_missing_metadata(self, organized_path: Path):
+		self.organize_music_files(organized_path.joinpath("_MISSING METADATA"), organized_path)
