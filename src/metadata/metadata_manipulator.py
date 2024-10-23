@@ -15,10 +15,11 @@ class MetadataKey(Enum):
 	AlbumArtist = "albumartist"
 
 	Genre = "genre"
-	SubGenre = "description"
+	Comments = "description"
 
 	TrackNumber = "tracknumber"
 	DiscNumber = "discnumber"
+	Grouping = "grouping"
 
 	Date = "date"
 	Year = "year"

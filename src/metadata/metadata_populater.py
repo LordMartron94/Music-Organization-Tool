@@ -1,10 +1,13 @@
 import re
+from difflib import SequenceMatcher
 from pathlib import Path
+from pprint import pprint
 from typing import List, Dict
 
 import musicbrainzngs
 from py_common.logging import HoornLogger
 
+from src.downloading.download_model import DownloadModel
 from src.handlers.library_file_handler import LibraryFileHandler
 from src.metadata.helpers.musicbrainz_api_helper import MusicBrainzAPIHelper
 from src.metadata.helpers.musicbrainz_result_interpreter import MusicBrainzResultInterpreter
@@ -31,57 +34,72 @@ class MetadataPopulater:
 			self._logger.info(f"Processing file: {file.name}")
 			self._process_file(file)
 
-	def _process_file(self, file: Path):
+	def find_and_embed_metadata_from_ids_for_file(self, download_model: DownloadModel) -> None:
+		file_path = download_model.path
+		recording_id = download_model.recording_id
+		release_id = download_model.release_id
+		genre = download_model.genre
+		subgenres = download_model.subgenre
+
+		recording_model: RecordingModel = self._recording_helper.get_recording_by_id(recording_id, release_id, genre=genre, subgenres=subgenres)
+
+		if recording_model is None:
+			return
+
+		self._embed_metadata(file_path, recording_model)
+
+	def find_and_embed_metadata_from_album(self, directory_path: Path, album_id: str):
+		self._logger.info("Starting metadata finder...")
+		files: List[Path] = self._get_files(directory_path)
+		for file in files:
+			self._logger.info(f"Processing file: {file.name}")
+			self._process_file(file, album_id)
+
+	def _process_file(self, file: Path, album_id: str = None) -> None:
 		"""
 		Processes a single music file to find and embed metadata.
 		"""
 
-		recording_model = self._find_recording(file)
+		recording_model = self._find_recording(file, album_id)
 		if recording_model:
 			self._embed_metadata(file, recording_model)
 		else:
 			self._logger.warning(f"No metadata found for {file.name}")
 
-	def _find_recording(self, file: Path) -> RecordingModel or None:
+	def _find_recording(self, file: Path, album_id: str = None) -> RecordingModel or None:
 		"""
 		Tries to find the MusicBrainz recording ID for the given file.
 		Prompts the user for manual input or to skip if automatic search fails.
 		"""
 
-		try:
-			search_results = self._search_musicbrainz(file.stem)
-			recording_id = self._musicbrainz_interpreter.choose_best_result(search_results, file.stem)
-			recording_model: RecordingModel = self._recording_helper.get_recording_by_id(recording_id)
+		if album_id is not None:
+			album = musicbrainzngs.get_release_by_id(album_id, includes=["recordings"])
+			recording_ids = [recording['recording']['id'] for recording in album['release']['medium-list'][0]['track-list']]
+			models = [self._recording_helper.get_recording_by_id(recording_id, album_id) for recording_id in recording_ids]
+			models = [model for model in models if model is not None]
+			return self._choose_model(models, file)
+		else:
+			try:
+				artist = input(f"Enter the author name for {file.stem}: ")
 
-			if recording_model and self._confirm_recording(recording_model):
+				search_results = self._search_musicbrainz(file.stem, artist)
+				recording_id = self._musicbrainz_interpreter.choose_best_result(search_results, file.stem)
+				recording_model: RecordingModel = self._recording_helper.get_recording_by_id(recording_id)
 				return recording_model
-		except musicbrainzngs.MusicBrainzError as e:
-			self._logger.error(f"MusicBrainzError: {e}")
+			except musicbrainzngs.MusicBrainzError as e:
+				self._logger.error(f"MusicBrainzError: {e}")
 
-		manual = self._get_manual_mbid(file)
+			manual = self._get_manual_mbid(file)
+			if manual:
+				return self._recording_helper.get_recording_by_id(manual)
 
-		if manual:
-			return self._recording_helper.get_recording_by_id(manual)
+			return None
 
-		return None
-
-	def _search_musicbrainz(self, query: str) -> dict:
+	def _search_musicbrainz(self, recording: str, artist: str) -> dict:
 		"""
 		Searches MusicBrainz for recordings matching the given query.
 		"""
-		return musicbrainzngs.search_recordings(recording=query)
-
-	def _confirm_recording(self, recording_model: RecordingModel) -> bool:
-		"""
-		Prompts the user to confirm if the automatically selected recording is correct.
-		"""
-		try:
-			metadata: Dict[MetadataKey, str] = recording_model.metadata
-			confirmation = input(f"Found: {metadata[MetadataKey.Artist]} - {metadata[MetadataKey.Title]}. Is this correct? (y/n): ")
-			return confirmation.lower() == 'y'
-		except musicbrainzngs.MusicBrainzError as e:
-			self._logger.error(f"MusicBrainzError: {e}")
-			return False
+		return musicbrainzngs.search_recordings(recording=recording, artist=artist)
 
 	def _get_manual_mbid(self, file: Path) -> str or None:
 		"""
@@ -118,3 +136,15 @@ class MetadataPopulater:
 
 	def _get_files(self, directory_path: Path) -> List[Path]:
 		return self._music_library_handler.get_music_files(directory_path)
+
+	def _choose_model(self, models: List[RecordingModel], file: Path):
+		ranked_models = self._rank_models_based_on_similarity_to_title(models, file.stem)
+		return ranked_models[0]
+
+	def _rank_models_based_on_similarity_to_title(self, models: List[RecordingModel], title: str) -> List[RecordingModel]:
+		ranked_models = sorted(models, key=lambda model: self._similarity_score(model.metadata[MetadataKey.Title], title), reverse=True)
+		return ranked_models
+
+	def _similarity_score(self, title1: str, title2: str) -> float:
+		matcher = SequenceMatcher(None, title1.lower(), title2.lower())
+		return matcher.ratio()

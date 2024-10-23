@@ -3,6 +3,7 @@ from typing import Dict, List
 
 from py_common.logging import HoornLogger
 
+from src.downloading.download_model import DownloadModel
 from src.handlers.library_file_handler import LibraryFileHandler
 from src.metadata.clear_metadata import ClearMetadata
 from src.metadata.metadata_manipulator import MetadataManipulator, MetadataKey
@@ -46,6 +47,9 @@ class MetadataAPI:
 	def populate_metadata_from_musicbrainz(self, directory_path: Path) -> None:
 		self._musicbrainz_metadata_populater.find_and_embed_metadata(directory_path)
 
+	def populate_metadata_from_musicbrainz_for_file(self, download_model: DownloadModel) -> None:
+		self._musicbrainz_metadata_populater.find_and_embed_metadata_from_ids_for_file(download_model)
+
 	def organize_music_files(self, directory_path: Path, organized_path: Path) -> None:
 		self._library_file_handler.organize_music_files(directory_path, organized_path)
 
@@ -54,3 +58,6 @@ class MetadataAPI:
 
 	def rescan_entire_library(self, organized_path: Path):
 		self._library_file_handler.rescan_entire_library(organized_path)
+
+	def populate_metadata_from_musicbrainz_album(self, directory_path: Path, album_id: str):
+		self._musicbrainz_metadata_populater.find_and_embed_metadata_from_album(directory_path, album_id)
