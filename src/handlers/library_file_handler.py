@@ -1,3 +1,4 @@
+import re
 import shutil
 from pathlib import Path
 from typing import List
@@ -65,6 +66,7 @@ class LibraryFileHandler:
 		artist = metadata[MetadataKey.Artist]
 		title = metadata[MetadataKey.Title]
 		new_name = f"{track_number:02d} - {artist} - {title}{file.suffix.lower()}"
+		new_name = self._clean_filename(new_name)
 
 		# Construct the new directory path
 		genre = metadata[MetadataKey.Genre].split(';')[0]
@@ -82,7 +84,9 @@ class LibraryFileHandler:
 		self._logger.info(f"Moved '{file.name}' to '{new_path.parent.name}/{new_path.name}'")
 
 	def _place_inaccurate_file(self, file: Path, organized_path: Path) -> None:
-		new_path: Path = organized_path.joinpath("_MISSING METADATA").joinpath(file.name)
+		cleaned_name = self._clean_filename(file.name)
+
+		new_path: Path = organized_path.joinpath("_MISSING METADATA").joinpath(cleaned_name)
 
 		if file == new_path:
 			return  # File already exists at the incorrect location
@@ -107,3 +111,30 @@ class LibraryFileHandler:
 			if child.is_dir() and not child.iterdir():
 				self._logger.debug(f"Removing empty directory: {child.name}")
 				child.rmdir()
+
+	def _clean_filename(self, filename: str, replacement_char='_') -> str:
+		"""
+		Cleans a filename by removing unsupported characters and replacing them
+		with a specified character (default: '_').
+
+		Args:
+		  filename: The filename to clean.
+		  replacement_char: The character to replace unsupported characters with.
+
+		Returns:
+		  The cleaned filename.
+		"""
+		# Define a regular expression to match invalid characters
+		invalid_chars = r'[<>:"/\\|?*\x00-\x1f]'
+
+		# Replace invalid characters with the replacement character
+		cleaned_filename = re.sub(invalid_chars, replacement_char, filename)
+
+		# Remove leading and trailing spaces and dots
+		cleaned_filename = cleaned_filename.strip(' .')
+
+		# Ensure the filename is not empty
+		if not cleaned_filename:
+			cleaned_filename = replacement_char
+
+		return cleaned_filename

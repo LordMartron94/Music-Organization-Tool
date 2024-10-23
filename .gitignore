@@ -129,6 +129,7 @@ dmypy.json
 /organized
 downloads.txt
 downloads.csv
+/temp
 
 # IDEA
 /.idea

@@ -17,7 +17,7 @@ SUPPORTED_MUSIC_EXTENSIONS: List[str] = [".mp3", ".wav", ".flac", ".m4a", ".ogg"
 GENRE_MAPPINGS: dict = {
 	"christian music": {
 		"label": "Christian Music",
-		"main": True
+		"main": False
 	},
 	"worship": {
 		"label": "Worship & Praise",
