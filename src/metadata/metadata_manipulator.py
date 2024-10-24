@@ -44,6 +44,22 @@ class MetadataManipulator:
 			self._logger.error(f"Error loading file {file_path}: {e}")
 			return None
 
+	def make_description_compatible(self, file_path: Path):
+		self._logger.debug(f"Making description compatible for file {file_path.name}")
+
+		file: mutagen.File = self._load_file(file_path)
+
+		if file is None:
+			return
+
+		description_value = file.get(MetadataKey.Comments.value, "")
+		file["comment"] = description_value
+		file["comments"] = description_value
+
+		file.save()
+
+		self._logger.debug(f"Description compatible for file {file_path.name} - Done")
+
 	def update_metadata_from_dict(self, file_path: Path, metadata_dict: Dict[MetadataKey, str]) -> None:
 		file: mutagen.File = self._load_file(file_path)
 
@@ -53,6 +69,11 @@ class MetadataManipulator:
 		for key, value in metadata_dict.items():
 			if key.value not in file.keys():
 				self._logger.warning(f"Metadata key {key.value} not found in file {file_path} - Trying to Add it.")
+
+			if key == MetadataKey.Comments:
+				# Make compatible with other software that doesn't support the description field
+				file["comment"] = value
+				file["comments"] = [value]
 
 			file[key.value] = value
 

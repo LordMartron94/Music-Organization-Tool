@@ -100,6 +100,15 @@ def download_and_assign_metadata(downloader: MusicDownloadInterface, metadata_ap
 	for download_model in download_files:
 		metadata_api.populate_metadata_from_musicbrainz_for_file(download_model)
 
+def make_description_compatible_for_library(metadata_api: MetadataAPI):
+	organized_path = input("Enter the directory path to save organized music (leave empty for default): ")
+
+	if organized_path == "":
+		organized_path = ORGANIZED_PATH
+	else: organized_path = Path(organized_path)
+
+	metadata_api.make_description_compatible_for_library(organized_path)
+
 if __name__ == "__main__":
 	log_dir = get_user_log_directory()
 
@@ -117,7 +126,6 @@ if __name__ == "__main__":
 	metadata_api: MetadataAPI = MetadataAPI(logger)
 
 	cli: CommandLineInterface = CommandLineInterface(logger)
-	cli.add_command(["exit", "quit"], "Exit the program.", clean_exit, arguments=[logger])
 	cli.add_command(["download"], "Download music files.", downloader.download_tracks)
 	cli.add_command(["download-and-md"], "Combines downloading and setting metadata.", download_and_assign_metadata, arguments=[downloader, metadata_api])
 	cli.add_command(["metadata", "md"], "Find metadata for the library.", populate_metadata_from_musicbrainz, arguments=[metadata_api])
@@ -127,5 +135,6 @@ if __name__ == "__main__":
 	cli.add_command(["organize"], "Organize music files.", organize_music_files, arguments=[metadata_api])
 	cli.add_command(["recheck"], "Recheck missing metadata.", recheck_missing_metadata, arguments=[metadata_api])
 	cli.add_command(["rescan"], "Rescans the entire library recursively.", rescan_entire_library, arguments=[metadata_api])
+	cli.add_command(["compatible"], "Make description compatible for the library.", make_description_compatible_for_library, arguments=[metadata_api])
 
 	cli.start_listen_loop()

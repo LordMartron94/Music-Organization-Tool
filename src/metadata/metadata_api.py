@@ -29,6 +29,14 @@ class MetadataAPI:
 	def update_metadata_from_dict(self, file_path: Path, metadata_dict: Dict[MetadataKey, str]) -> None:
 		self._metadata_manipulator.update_metadata_from_dict(file_path, metadata_dict)
 
+	def make_description_compatible(self, file_path: Path) -> None:
+		self._metadata_manipulator.make_description_compatible(file_path)
+
+	def make_description_compatible_for_library(self, directory_path: Path) -> None:
+		music_files = self._library_file_handler.get_music_files(directory_path)
+		for file_path in music_files:
+			self._metadata_manipulator.make_description_compatible(file_path)
+
 	def update_metadata(self, file_path: Path, metadata_key: MetadataKey, new_value: str) -> None:
 		self._metadata_manipulator.update_metadata(file_path, metadata_key, new_value)
 
