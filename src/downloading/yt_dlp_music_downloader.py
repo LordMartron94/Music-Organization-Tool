@@ -1,5 +1,7 @@
 import os.path
+import re
 from pathlib import Path
+from pprint import pprint
 from typing import List
 
 import yt_dlp
@@ -97,7 +99,7 @@ class YTDLPMusicDownloader(MusicDownloadInterface):
 
 	def _download_urls(self, urls: List[str]) -> List[Path]:
 		ydl_opts = {
-			'format': 'bestaudio/best',  # Download the best available audio
+			'format': 'bestaudio/best',
 			'postprocessors': [{
 				'key': 'FFmpegExtractAudio',
 				'preferredcodec': 'flac',
@@ -112,11 +114,21 @@ class YTDLPMusicDownloader(MusicDownloadInterface):
 
 		with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 			for url in urls:
-				info = ydl.extract_info(url, download=False)
-				path = DOWNLOAD_PATH.joinpath(info['title'] + ".flac")
-				downloaded_files.append(path)
+				info_dict = ydl.extract_info(url, download=False)
+				title = info_dict.get('title', 'audio')
+				title = self._clean_filename(title)
 
-			ydl.download(urls)
+				# Update the info_dict with the sanitized title and preferred extension
+				info_dict['title'] = title
+				info_dict['ext'] = 'flac'  # Set the expected extension after post-processing
+				ydl_opts['outtmpl']['default'] = os.path.join(DOWNLOAD_PATH, f'{title}.%(ext)s')  # Update the output template with the sanitized title
+
+				# Download the audio
+				ydl.download([url])
+
+				# Get the extracted audio file path
+				file_path = ydl.prepare_filename(info_dict)
+				downloaded_files.append(Path(file_path))
 
 		return downloaded_files
 
@@ -127,3 +139,30 @@ class YTDLPMusicDownloader(MusicDownloadInterface):
 			return self._get_choice()
 
 		return choice
+
+	def _clean_filename(self, filename: str, replacement_char='_') -> str:
+		"""
+		Cleans a filename by removing unsupported characters and replacing them
+		with a specified character (default: '_').
+
+		Args:
+		  filename: The filename to clean.
+		  replacement_char: The character to replace unsupported characters with.
+
+		Returns:
+		  The cleaned filename.
+		"""
+		# Define a regular expression to match invalid characters
+		invalid_chars = r'[<>:"/\\|?*\x00-\x1f]'
+
+		# Replace invalid characters with the replacement character
+		cleaned_filename = re.sub(invalid_chars, replacement_char, filename)
+
+		# Remove leading and trailing spaces and dots
+		cleaned_filename = cleaned_filename.strip(' .')
+
+		# Ensure the filename is not empty
+		if not cleaned_filename:
+			cleaned_filename = replacement_char
+
+		return cleaned_filename
