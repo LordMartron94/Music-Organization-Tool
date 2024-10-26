@@ -31,8 +31,11 @@ class ConstructStandardizedGenres:
 		conscious_reggae = self._add_standardized_genre(["conscious reggae"], "Conscious Reggae")
 		ragga_reggae = self._add_standardized_genre(["ragga"], "Ragga Reggae")
 		dancehall_reggae = self._add_standardized_genre(["dancehall"], "Dancehall Reggae")
+		dub_reggae = self._add_standardized_genre(["dub", "dub reggae"], "Dub Reggae")
+		lovers_rock_reggae = self._add_standardized_genre(["lovers rock", "lr", "lover's rock reggae"], "Lovers' Rock Reggae")
+		reggaeton = self._add_standardized_genre(["reggaeton"], "Reggaeton")
 
-		standardized_models.append(self._add_standardized_genre(["reggae"], "Reggae", [roots_reggae, conscious_reggae, ragga_reggae, dancehall_reggae], is_main=True))
+		standardized_models.append(self._add_standardized_genre(["reggae"], "Reggae", [roots_reggae, conscious_reggae, ragga_reggae, dancehall_reggae, dub_reggae, lovers_rock_reggae, reggaeton], is_main=True))
 
 	def _hiphop(self, standardized_models: List[GenreStandardModel]):
 		conscious_hip_hop = self._add_standardized_genre(["conscious hip hop"], "Conscious Hip-Hop")
