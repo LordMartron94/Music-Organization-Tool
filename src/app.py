@@ -9,6 +9,7 @@ from src.constants import DOWNLOAD_PATH, ORGANIZED_PATH
 from src.downloading.download_model import DownloadModel
 from src.downloading.music_download_interface import MusicDownloadInterface
 from src.downloading.yt_dlp_music_downloader import YTDLPMusicDownloader
+from src.metadata.helpers.track_model import TrackModel
 from src.metadata.metadata_api import MetadataAPI
 
 
@@ -109,6 +110,12 @@ def make_description_compatible_for_library(metadata_api: MetadataAPI):
 
 	metadata_api.make_description_compatible_for_library(organized_path)
 
+def print_track_ids_from_album(metadata_api: MetadataAPI):
+	track_models: List[TrackModel] = metadata_api.get_track_ids_from_album()
+	print("Track IDs:")
+	for track_model in track_models:
+		print(f"- {track_model.track_number} - {track_model.mbid} - {track_model.title}")
+
 if __name__ == "__main__":
 	log_dir = get_user_log_directory()
 
@@ -136,5 +143,7 @@ if __name__ == "__main__":
 	cli.add_command(["recheck"], "Recheck missing metadata.", recheck_missing_metadata, arguments=[metadata_api])
 	cli.add_command(["rescan"], "Rescans the entire library recursively.", rescan_entire_library, arguments=[metadata_api])
 	cli.add_command(["compatible"], "Make description compatible for the library.", make_description_compatible_for_library, arguments=[metadata_api])
+	cli.add_command(["get-tracks"], "Prints the IDs for all tracks in an Album.", print_track_ids_from_album, arguments=[metadata_api])
+	cli.add_command(["add-album-to-downloads"], "Adds an album to the downloads.csv file.", metadata_api.add_album_to_downloads)
 
 	cli.start_listen_loop()

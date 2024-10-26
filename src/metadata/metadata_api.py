@@ -6,6 +6,7 @@ from py_common.logging import HoornLogger
 from src.downloading.download_model import DownloadModel
 from src.handlers.library_file_handler import LibraryFileHandler
 from src.metadata.clear_metadata import ClearMetadata
+from src.metadata.helpers.track_model import TrackModel
 from src.metadata.metadata_manipulator import MetadataManipulator, MetadataKey
 from src.metadata.metadata_populater import MetadataPopulater
 
@@ -69,3 +70,9 @@ class MetadataAPI:
 
 	def populate_metadata_from_musicbrainz_album(self, directory_path: Path, album_id: str):
 		self._musicbrainz_metadata_populater.find_and_embed_metadata_from_album(directory_path, album_id)
+
+	def get_track_ids_from_album(self) -> List[TrackModel]:
+		return self._musicbrainz_metadata_populater.get_track_ids_in_album()
+
+	def add_album_to_downloads(self) -> None:
+		self._musicbrainz_metadata_populater.add_album_to_downloads()

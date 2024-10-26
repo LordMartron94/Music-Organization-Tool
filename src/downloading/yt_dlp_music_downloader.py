@@ -1,8 +1,9 @@
 import os.path
 import re
+import time
 from pathlib import Path
 from pprint import pprint
-from typing import List
+from typing import List, Dict
 
 import yt_dlp
 from py_common.logging import HoornLogger
@@ -68,36 +69,33 @@ class YTDLPMusicDownloader(MusicDownloadInterface):
 
 		with open(file_path, 'r') as file:
 			data = file.readlines()[1:] # Skip the header line
-			urls = []
-			release_ids = []
-			recording_ids = []
-			genres = []
-			subgenres = []
+			url_data = {}
 
 			for line in data:
 				parts = line.strip().split(',')
-				urls.append(parts[0])
-				release_ids.append(parts[1])
-				recording_ids.append(parts[2])
-				genres.append(parts[3])
-				subgenres.append(parts[4])
+				url_data[parts[0]] = {
+					"release id": parts[1],
+                    "recording id": parts[2],
+                    "genre": parts[4],
+                    "subgenres": parts[5]
+				}
 
-			paths: List[Path] = self._download_urls(urls)
+			paths: Dict[str, Path] = self._download_urls([url for url, _ in url_data.items()])
 
 			recording_models: List[DownloadModel] = []
-			for i in range(len(urls)):
+			for url, path in paths.items():
 				recording_models.append(DownloadModel(
-                    url=urls[i],
-					path=paths[i],
-                    release_id=release_ids[i],
-                    recording_id=recording_ids[i],
-                    genre=genres[i],
-                    subgenre=subgenres[i]
+                    url=url,
+					path=path,
+                    release_id=url_data[url]['release id'],
+                    recording_id=url_data[url]['recording id'],
+                    genre=url_data[url]['genre'],
+                    subgenre=url_data[url]['subgenres']
                 ))
 
 			return recording_models
 
-	def _download_urls(self, urls: List[str]) -> List[Path]:
+	def _download_urls(self, urls: List[str]) -> Dict[str, Path]:
 		ydl_opts = {
 			'format': 'bestaudio/best',
 			'postprocessors': [{
@@ -110,25 +108,36 @@ class YTDLPMusicDownloader(MusicDownloadInterface):
 			"cookiefile": COOKIES_FILE
 		}
 
-		downloaded_files: List[Path] = []
+		downloaded_files: Dict[str, Path] = {}
 
 		with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 			for url in urls:
-				info_dict = ydl.extract_info(url, download=False)
-				title = info_dict.get('title', 'audio')
-				title = self._clean_filename(title)
+				retries = 3
+				backoff_factor = 2
+				for i in range(retries):
+					try:
+						info_dict = ydl.extract_info(url, download=False)
+						title = info_dict.get('title', 'audio')
+						title = self._clean_filename(title)
 
-				# Update the info_dict with the sanitized title and preferred extension
-				info_dict['title'] = title
-				info_dict['ext'] = 'flac'  # Set the expected extension after post-processing
-				ydl_opts['outtmpl']['default'] = os.path.join(DOWNLOAD_PATH, f'{title}.%(ext)s')  # Update the output template with the sanitized title
+						info_dict['title'] = title
+						info_dict['ext'] = 'flac'
+						ydl_opts['outtmpl']['default'] = os.path.join(DOWNLOAD_PATH, f'{title}.%(ext)s')
 
-				# Download the audio
-				ydl.download([url])
+						ydl.download([url])
 
-				# Get the extracted audio file path
-				file_path = ydl.prepare_filename(info_dict)
-				downloaded_files.append(Path(file_path))
+						file_path = ydl.prepare_filename(info_dict)
+						downloaded_files[url] = Path(file_path)
+						time.sleep(0.5)
+						break  # Comment this line if you want to torment your soul for all eternity.
+					except yt_dlp.utils.DownloadError as e:
+						self._logger.error(f"Error downloading '{url}': {e} - Retrying in ")
+						wait_time = backoff_factor ** i
+						self._logger.warning(f"Rate limited, retrying in {wait_time} seconds...")
+						time.sleep(wait_time)
+					except Exception as e:
+						self._logger.error(f"An error occurred while downloading '{url}': {e}")
+						break
 
 		return downloaded_files
 

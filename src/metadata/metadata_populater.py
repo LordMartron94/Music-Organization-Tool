@@ -1,3 +1,5 @@
+import csv
+import os
 import re
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -5,13 +7,16 @@ from pprint import pprint
 from typing import List, Dict
 
 import musicbrainzngs
+from mutagen import Metadata
 from py_common.logging import HoornLogger
 
+from src.constants import DOWNLOAD_CSV_FILE
 from src.downloading.download_model import DownloadModel
 from src.handlers.library_file_handler import LibraryFileHandler
 from src.metadata.helpers.musicbrainz_api_helper import MusicBrainzAPIHelper
 from src.metadata.helpers.musicbrainz_result_interpreter import MusicBrainzResultInterpreter
 from src.metadata.helpers.recording_model import RecordingModel
+from src.metadata.helpers.track_model import TrackModel
 from src.metadata.metadata_manipulator import MetadataManipulator, MetadataKey
 
 
@@ -148,3 +153,56 @@ class MetadataPopulater:
 	def _similarity_score(self, title1: str, title2: str) -> float:
 		matcher = SequenceMatcher(None, title1.lower(), title2.lower())
 		return matcher.ratio()
+
+	def get_track_ids_in_album(self, album_id: str = None) -> List[TrackModel]:
+		if album_id is None:
+			album_id = input("Enter the MusicBrainz album ID: ")
+
+		album = musicbrainzngs.get_release_by_id(album_id, includes=["recordings"])
+		selected_medium = self._get_selected_medium(album)
+		recording_ids, recording_titles, recording_track_numbers = [], [], []
+
+		for track in selected_medium['track-list']:
+			recording_ids.append(track['recording']['id'])
+			recording_titles.append(track['recording']['title'])
+			recording_track_numbers.append(track['number'])
+
+		track_models = []
+		for i, recording_id in enumerate(recording_ids, start=1):
+			recording_model = self._recording_helper.get_recording_by_id(recording_id, album_id)
+			track_models.append(TrackModel(mbid=recording_id, title=recording_model.metadata[MetadataKey.Title], track_number=recording_model.metadata[MetadataKey.TrackNumber]))
+
+		return track_models
+
+	def _get_selected_medium(self, album: dict) -> dict:
+		while True:
+			for i, medium in enumerate(album['release']['medium-list'], start=1):
+				print(f"{i}. {medium['format']}")
+			user_input = input("Enter the number of the medium to choose (1-" + str(len(album['release']['medium-list'])) + "): ")
+			try:
+				selected_medium = album['release']['medium-list'][int(user_input) - 1]
+				return selected_medium
+			except (IndexError, ValueError):
+				self._logger.error("Invalid input. Please enter a number between 1 and " + str(len(album['release']['medium-list'])))
+
+	def add_album_to_downloads(self):
+		file_path = input("Enter the file path containing the music URLs (csv, leave empty for default): ")
+
+		if file_path == "":
+			file_path = DOWNLOAD_CSV_FILE
+		else: file_path = Path(file_path)
+
+		# validate file path
+		if not os.path.isfile(file_path):
+			self._logger.error(f"File not found: {file_path}")
+			return []
+
+		album_id = input("Enter the MusicBrainz ID of the album: ")
+		tracks: List[TrackModel] = self.get_track_ids_in_album(album_id)
+
+		# Header Columns: URL,RELEASE ID,TRACK ID,TRACK TITLE,GENRE,SUBGENRES
+		# Leaving URL Genre and Subgenres blank for now
+		with open(file_path, 'a') as csvfile:
+			for track in tracks:
+				line: str = f",{album_id},{track.mbid},{track.title},,\n"
+				csvfile.write(line)
