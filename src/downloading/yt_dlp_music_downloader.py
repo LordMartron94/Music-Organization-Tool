@@ -131,9 +131,8 @@ class YTDLPMusicDownloader(MusicDownloadInterface):
 						time.sleep(0.5)
 						break  # Comment this line if you want to torment your soul for all eternity.
 					except yt_dlp.utils.DownloadError as e:
-						self._logger.error(f"Error downloading '{url}': {e} - Retrying in ")
 						wait_time = backoff_factor ** i
-						self._logger.warning(f"Rate limited, retrying in {wait_time} seconds...")
+						self._logger.warning(f"Error downloading '{url}': {e}, retrying in {wait_time} seconds...")
 						time.sleep(wait_time)
 					except Exception as e:
 						self._logger.error(f"An error occurred while downloading '{url}': {e}")
