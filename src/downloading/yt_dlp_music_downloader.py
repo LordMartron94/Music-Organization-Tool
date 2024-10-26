@@ -7,7 +7,7 @@ from typing import List, Dict
 import yt_dlp
 from py_common.logging import HoornLogger
 
-from src.constants import DOWNLOAD_PATH, DOWNLOAD_CHECKER_FILE, COOKIES_FILE, DOWNLOAD_CSV_FILE
+from src.constants import DOWNLOAD_PATH, COOKIES_FILE, DOWNLOAD_CSV_FILE
 from src.downloading.download_model import DownloadModel
 from src.downloading.music_download_interface import MusicDownloadInterface
 
@@ -22,37 +22,15 @@ class YTDLPMusicDownloader(MusicDownloadInterface):
 		choice = self._get_choice()
 		if choice.lower() =='single':
 			return [self._download_single_track()]
-		elif choice.lower() =='multiple':
-			return self._download_multiple_tracks()
 		elif choice.lower() == 'csv':
 			return self._download_csv_tracks()
 
 	def _download_single_track(self) -> DownloadModel:
 		url = input("Enter the music URL: ")
-		path: Path = self._download_urls([url])[0]
-		return DownloadModel(url=url, path=path)
-
-	def _download_multiple_tracks(self) -> List[DownloadModel]:
-		file_path = input("Enter the file path containing the music URLs (one per line, leave empty for default): ")
-
-		if file_path == "":
-			file_path = DOWNLOAD_CHECKER_FILE
-		else: file_path = Path(file_path)
-
-		# validate file path
-		if not os.path.isfile(file_path):
-			self._logger.error(f"File not found: {file_path}")
-			return []
-
-		with open(file_path, 'r') as file:
-			urls = [line.strip() for line in file.readlines()]
-			paths: List[Path] = self._download_urls(urls)
-
-			download_models = []
-			for i in range(len(urls)):
-				download_models.append(DownloadModel(url=urls[i], path=paths[i]))
-
-			return download_models
+		recording_id: str = input("Enter the recording ID: ")
+		album_id: str = input("Enter the album ID: ")
+		path: Path = self._download_urls([url])[url]
+		return DownloadModel(url=url, path=path, recording_id=recording_id, release_id=album_id)
 
 	def _download_csv_tracks(self) -> List[DownloadModel]:
 		file_path = input("Enter the file path containing the music URLs (csv, leave empty for default): ")
@@ -144,8 +122,8 @@ class YTDLPMusicDownloader(MusicDownloadInterface):
 		return downloaded_files
 
 	def _get_choice(self) -> str:
-		choice = input("Choose a download option (single/multiple/csv): ")
-		if choice.lower() not in ['single','multiple', 'csv']:
+		choice = input("Choose a download option (single/csv): ")
+		if choice.lower() not in ['single', 'csv']:
 			self._logger.error(f"Invalid option '{choice}'. Choose from: single, multiple")
 			return self._get_choice()
 
