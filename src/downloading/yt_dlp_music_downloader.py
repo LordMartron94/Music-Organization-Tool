@@ -34,6 +34,7 @@ class YTDLPMusicDownloader(MusicDownloadInterface):
 
 	def _download_csv_tracks(self) -> List[DownloadModel]:
 		file_path = input("Enter the file path containing the music URLs (csv, leave empty for default): ")
+		want_to_detect_genres_automatically = input("Do you want to detect genres automatically? (y/n): ").lower() == 'y'
 
 		if file_path == "":
 			file_path = DOWNLOAD_CSV_FILE
@@ -53,15 +54,15 @@ class YTDLPMusicDownloader(MusicDownloadInterface):
 				url_data[parts[0]] = {
 					"release id": parts[1],
                     "recording id": parts[2],
-                    "genre": parts[4],
-                    "subgenres": parts[5]
+                    "genre": parts[4] if not want_to_detect_genres_automatically else None,
+                    "subgenres": parts[5] if not want_to_detect_genres_automatically else None
 				}
 
 			paths: Dict[str, Path] = self._download_urls([url for url, _ in url_data.items()])
 
-			recording_models: List[DownloadModel] = []
+			download_models: List[DownloadModel] = []
 			for url, path in paths.items():
-				recording_models.append(DownloadModel(
+				download_models.append(DownloadModel(
                     url=url,
 					path=path,
                     release_id=url_data[url]['release id'],
@@ -74,7 +75,7 @@ class YTDLPMusicDownloader(MusicDownloadInterface):
 			for url in missed_urls:
 				self._logger.warning(f"The following url could not be downloaded: {url}, id: {url_data[url]['recording id']}")
 
-			return recording_models
+			return download_models
 
 	def _download_urls(self, urls: List[str]) -> Dict[str, Path]:
 		ydl_opts = {
