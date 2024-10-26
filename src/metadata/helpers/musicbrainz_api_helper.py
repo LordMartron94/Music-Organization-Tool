@@ -55,8 +55,8 @@ class MusicBrainzAPIHelper:
 
 				genre_data: GenreDataModel = self._genre_algorithm.get_genre_data(recording_id, release_id) if subgenres is None else None
 
-				main_genre = genre_data.main_genre.standardized_label
-				sub_genres = [sub_genre.standardized_label for sub_genre in genre_data.sub_genres]
+				main_genre = genre_data.main_genre.standardized_label if genre is None else None
+				sub_genres = [sub_genre.standardized_label for sub_genre in genre_data.sub_genres] if subgenres is None else None
 
 				metadata[MetadataKey.Genre] = main_genre if genre is None else genre
 				metadata[MetadataKey.Comments] = "Subgenres: " + ("; ".join(sub_genres) if subgenres is None else subgenres)
