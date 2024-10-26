@@ -1,6 +1,5 @@
 from enum import Enum
 from pathlib import Path
-from pprint import pprint
 from typing import Dict, List
 
 import mutagen

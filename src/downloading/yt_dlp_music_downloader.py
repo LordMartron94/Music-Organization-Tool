@@ -2,7 +2,6 @@ import os.path
 import re
 import time
 from pathlib import Path
-from pprint import pprint
 from typing import List, Dict
 
 import yt_dlp
