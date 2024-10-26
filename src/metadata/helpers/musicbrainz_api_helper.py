@@ -53,7 +53,7 @@ class MusicBrainzAPIHelper:
 				metadata[MetadataKey.Length] = str(recording_length / 1000)  # Convert milliseconds to seconds
 				metadata[MetadataKey.Grouping] = "No Energy"
 
-				genre_data: GenreDataModel = self._genre_algorithm.get_genre_data(recording_id, release_id)
+				genre_data: GenreDataModel = self._genre_algorithm.get_genre_data(recording_id, release_id) if subgenres is None else None
 
 				main_genre = genre_data.main_genre.standardized_label
 				sub_genres = [sub_genre.standardized_label for sub_genre in genre_data.sub_genres]

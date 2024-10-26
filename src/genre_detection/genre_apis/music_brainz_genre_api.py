@@ -40,7 +40,12 @@ class MusicBrainzGenreAPI(GenreAPIInterface):
 
 	def _get_genre_data_from_musicbrainz(self, track_id: str) -> List[str]:
 		recording = musicbrainzngs.get_recording_by_id(track_id, includes=["tags"])
-		genres = recording["recording"]["tag-list"]
+
+		try:
+			genres = recording["recording"]["tag-list"]
+		except KeyError:
+			self._logger.error("No genres found for track ID.")
+			return []
 
 		return [genre["name"] for genre in genres]
 
