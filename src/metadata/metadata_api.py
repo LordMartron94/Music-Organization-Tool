@@ -4,6 +4,7 @@ from typing import Dict, List
 from py_common.logging import HoornLogger
 
 from src.downloading.download_model import DownloadModel
+from src.genre_detection.genre_algorithm import GenreAlgorithm
 from src.handlers.library_file_handler import LibraryFileHandler
 from src.metadata.clear_metadata import ClearMetadata
 from src.metadata.helpers.track_model import TrackModel
@@ -14,11 +15,11 @@ from src.metadata.metadata_populater import MetadataPopulater
 class MetadataAPI:
 	"""Facade class for manipulating music metadata."""
 
-	def __init__(self, logger: HoornLogger):
+	def __init__(self, logger: HoornLogger, genre_algorithm: GenreAlgorithm):
 		self._logger = logger
 		self._metadata_clear_tool: ClearMetadata = ClearMetadata(logger)
 		self._metadata_manipulator: MetadataManipulator = MetadataManipulator(logger)
-		self._musicbrainz_metadata_populater: MetadataPopulater = MetadataPopulater(logger)
+		self._musicbrainz_metadata_populater: MetadataPopulater = MetadataPopulater(logger, genre_algorithm)
 		self._library_file_handler: LibraryFileHandler = LibraryFileHandler(logger)
 
 	def clear_genres(self, music_directory: Path) -> None:

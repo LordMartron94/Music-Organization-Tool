@@ -9,6 +9,7 @@ from src.constants import DOWNLOAD_PATH, ORGANIZED_PATH
 from src.downloading.download_model import DownloadModel
 from src.downloading.music_download_interface import MusicDownloadInterface
 from src.downloading.yt_dlp_music_downloader import YTDLPMusicDownloader
+from src.genre_detection.genre_algorithm import GenreAlgorithm
 from src.metadata.helpers.track_model import TrackModel
 from src.metadata.metadata_api import MetadataAPI
 
@@ -116,6 +117,12 @@ def print_track_ids_from_album(metadata_api: MetadataAPI):
 	for track_model in track_models:
 		print(f"- {track_model.track_number} - {track_model.mbid} - {track_model.title}")
 
+def get_genre_data(genre_algorithm: GenreAlgorithm):
+	track_id: str = input("Enter the MusicBrainz track ID: ")
+	album_id: str = input("Enter the MusicBrainz album ID: ")
+
+	genre_algorithm.get_genre_data(track_id, album_id)
+
 if __name__ == "__main__":
 	log_dir = get_user_log_directory()
 
@@ -130,7 +137,8 @@ if __name__ == "__main__":
 	)
 
 	downloader: MusicDownloadInterface = YTDLPMusicDownloader(logger)
-	metadata_api: MetadataAPI = MetadataAPI(logger)
+	genre_algorithm: GenreAlgorithm = GenreAlgorithm(logger)
+	metadata_api: MetadataAPI = MetadataAPI(logger, genre_algorithm)
 
 	cli: CommandLineInterface = CommandLineInterface(logger)
 	cli.add_command(["download"], "Download music files.", downloader.download_tracks)
@@ -145,5 +153,6 @@ if __name__ == "__main__":
 	cli.add_command(["compatible"], "Make description compatible for the library.", make_description_compatible_for_library, arguments=[metadata_api])
 	cli.add_command(["get-tracks"], "Prints the IDs for all tracks in an Album.", print_track_ids_from_album, arguments=[metadata_api])
 	cli.add_command(["add-album-to-downloads"], "Adds an album to the downloads.csv file.", metadata_api.add_album_to_downloads)
+	cli.add_command(["get-genre"], "Retrieves genre information for a track.", get_genre_data, arguments=[genre_algorithm])
 
 	cli.start_listen_loop()

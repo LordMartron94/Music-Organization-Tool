@@ -92,6 +92,10 @@ class YTDLPMusicDownloader(MusicDownloadInterface):
                     subgenre=url_data[url]['subgenres']
                 ))
 
+			missed_urls = [url for url in url_data.keys() if url not in paths.keys()]
+			for url in missed_urls:
+				self._logger.warning(f"The following url could not be downloaded: {url}, id: {url_data[url]['recording id']}")
+
 			return recording_models
 
 	def _download_urls(self, urls: List[str]) -> Dict[str, Path]:

@@ -9,6 +9,7 @@ from py_common.logging import HoornLogger
 
 from src.constants import DOWNLOAD_CSV_FILE
 from src.downloading.download_model import DownloadModel
+from src.genre_detection.genre_algorithm import GenreAlgorithm
 from src.handlers.library_file_handler import LibraryFileHandler
 from src.metadata.helpers.musicbrainz_api_helper import MusicBrainzAPIHelper
 from src.metadata.helpers.musicbrainz_result_interpreter import MusicBrainzResultInterpreter
@@ -18,12 +19,12 @@ from src.metadata.metadata_manipulator import MetadataManipulator, MetadataKey
 
 
 class MetadataPopulater:
-	def __init__(self, logger: HoornLogger):
+	def __init__(self, logger: HoornLogger, genre_algorithm: GenreAlgorithm):
 		self._logger = logger
 		self._music_library_handler: LibraryFileHandler = LibraryFileHandler(logger)
 		self._metadata_manipulator: MetadataManipulator = MetadataManipulator(logger)
 		self._musicbrainz_interpreter: MusicBrainzResultInterpreter = MusicBrainzResultInterpreter(logger)
-		self._recording_helper: MusicBrainzAPIHelper = MusicBrainzAPIHelper(logger)
+		self._recording_helper: MusicBrainzAPIHelper = MusicBrainzAPIHelper(logger, genre_algorithm)
 		musicbrainzngs.set_useragent("Music Organization Tool", "0.0", "https://github.com/LordMartron94/music-organization-tool")
 
 	def find_and_embed_metadata(self, directory_path: Path):
